@@ -1,0 +1,25 @@
+{
+  "name": "feeder_api",
+  "version": "0.0.1",
+  "main": "server.js",
+  "scripts": {
+    "pretest": "jshint ."
+  },
+  "dependencies": {
+    "bunyan": "^1.4.0",
+    "feedparser": "1.1.x",
+    "pouchdb": "3.6.x",
+    "pouchdb-upsert": "latest",
+    "request": "2.58.x",
+    "requirejs": "^2.1.18",
+    "restify": "^3.0.3"
+  },
+  "devDependencies": {
+    "jshint": "^2.5.6"
+  },
+  "repository": {
+    "type": "",
+    "url": ""
+  },
+  "description": "feeder_api"
+}

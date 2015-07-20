@@ -4,15 +4,16 @@ requirejs.config({
     //Pass the top-level main.js/index.js require
     //function to requirejs so that node modules
     //are loaded relative to the top-level JS file.
-    nodeRequire: require
+    nodeRequire: require,
+    baseUrl: 'lib'
 });
 
-requirejs(['restify', 'bunyan', 'feed', 'tag'],
-function   (restify, bunyan, feed, tag) {
+requirejs(['restify', 'bunyan', 'Feed', 'tag'],
+function   (restify, bunyan, Feed, tag) {
   var server = restify.createServer()
     , log = bunyan.createLogger({ name: 'feeder_api'});
-  log.level("debug")
-  feed.setLogger(log);
+  log.level("debug");
+  Feed.setLogger(log);
   tag.setLogger(log);
 
   server.use(restify.CORS());
@@ -26,18 +27,33 @@ function   (restify, bunyan, feed, tag) {
   }));
 
   server.post('/feeds/add', addFeed);
+  server.get('/feeds/:name/articles', getArticles);
 
   server.listen(3000, function() {
     log.info('%s listening at %s', server.name, server.url);
   });
 
   function addFeed(req, res, next) {
-    feed.add(req.params.link, function(result) {
-      // Add to 'untagged' tag
-      tag.tag(result.feed, 'untagged');
-      res.send(result);
-      next();
-    });
-  }
+    Feed.add(req.params.link)
+      .then(function(result) {
+        // Add to 'untagged' tag
+        tag.tag(result.feed, 'untagged');
+        res.send(result);
+        next();
+      }).catch(function(err) {
+        log.error(err);
+      }).done();
+  };
+
+  function getArticles(req, res, next) {
+    Feed.getArticles(req.params.name)
+      .then(function(result) {
+        res.send(result);
+        next();
+      }).catch(function(err) {
+        log.error(err);
+      }).done();
+  };
+
 });
 

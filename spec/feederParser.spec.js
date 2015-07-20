@@ -1,4 +1,4 @@
-var FeederParser = require('../FeederParser'),
+var FeederParser = require('../lib/FeederParser'),
     bunyan = require('bunyan'),
     request = require('request'),
     nock = require('nock'),
@@ -37,6 +37,7 @@ describe("FeederParser", function() {
 
 
   beforeEach(function() {
+    //log.level('debug');
     parser = new FeederParser();
     parser.setLogger(log);
   });
@@ -57,13 +58,13 @@ describe("FeederParser", function() {
 
     it("returns the feed", function(done) {
       req.on('response', function(res) {
+        //console.log(res);
         parser.parse(res)
               .then(function(feed) {
-                expect(feed._id).toBe('feed_' + uri + '/feed');
                 expect(feed.type).toBe('feed');
                 expect(feed.title).toBe('FeedParser Test Feed');
                 expect(feed.description).toBe('FeedParser Test Feed Description');
-                expect(feed.link).toBe('http://feed.parser.test/');
+                expect(feed.website_link).toBe('http://feed.parser.test/');
                 expect(feed.updated_at).toEqual(new Date('Mon, 06 Jul 2015 10:01:00 EDT'));
                 expect(feed.published_at).toEqual(new Date('Mon, 06 Jul 2015 10:01:00 EDT'));
                 scope.done();

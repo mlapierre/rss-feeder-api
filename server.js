@@ -8,13 +8,12 @@ requirejs.config({
     baseUrl: 'lib'
 });
 
-requirejs(['restify', 'bunyan', 'Feed', 'tag'],
-function   (restify, bunyan, Feed, tag) {
-  var server = restify.createServer()
-    , log = bunyan.createLogger({ name: 'feeder_api'});
+requirejs(['restify', 'bunyan', 'Feed', 'Tag'],
+function   (restify, bunyan, Feed, Tag) {
+  var server = restify.createServer(),
+      log = bunyan.createLogger({ name: 'feeder_api'});
+
   log.level("debug");
-  Feed.setLogger(log);
-  tag.setLogger(log);
 
   server.use(restify.CORS());
   server.use(restify.bodyParser({ mapParams: true }));
@@ -37,7 +36,12 @@ function   (restify, bunyan, Feed, tag) {
     Feed.add(req.params.link)
       .then(function(result) {
         // Add to 'untagged' tag
-        tag.tag(result.feed, 'untagged');
+        //log.debug(result);
+        console.log(result);
+        Tag.tag(result.feed, 'untagged')
+          .catch(function(err) {
+            log.error(err);
+          });
         res.send(result);
         next();
       }).catch(function(err) {

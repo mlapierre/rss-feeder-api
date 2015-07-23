@@ -8,18 +8,15 @@ requirejs.config({
     baseUrl: 'lib'
 });
 
-requirejs(['request', 'bunyan', 'FeederStore', 'FeederCrawler'],
-function   (request, bunyan, FeederStore, FeederCrawler) {
+requirejs(['request', 'FeederStore', 'FeederCrawler'],
+function   (request, FeederStore, FeederCrawler) {
 
   //var feed_url = 'http://feeds.arstechnica.com/arstechnica/index';
   //var feed_url = "http://www.polygon.com/rss/index.xml";
   //var feed_url = "http://feeds.gawker.com/lifehacker/full";
 
-  var feederStore = new FeederStore('http://localhost:5984/feeder'),
-      feederCrawler = new FeederCrawler(),
-      log = bunyan.createLogger({ name: 'feeder_api'});
-
-  feederCrawler.setLogger(log);
+  var feederStore = new FeederStore(),
+      feederCrawler = new FeederCrawler();
 
   updateAll();
 

@@ -8,32 +8,32 @@ requirejs.config({
     baseUrl: 'lib'
 });
 
-requirejs(['restify', 'bunyan', 'Feed', 'Tag'],
-function   (restify, bunyan, Feed, Tag) {
-  var server = restify.createServer(),
+requirejs(['express', 'bunyan', 'Feed', 'Tag', 'body-parser', 'cors', 'morgan'],
+function   (express, bunyan, Feed, Tag, bodyparser, cors, logger) {
+  var app = express(),
       log = bunyan.createLogger({ name: 'feeder_api'});
 
   log.level("debug");
 
-  server.use(restify.CORS());
-  server.use(restify.bodyParser({ mapParams: true }));
+  // server.on('after', restify.auditLogger({
+  //   log: bunyan.createLogger({
+  //     name: 'audit',
+  //     stream: process.stdout
+  //   })
+  // }));
+  app.use(cors());
+  app.use(bodyparser.json());
+  app.use(logger());
 
-  server.on('after', restify.auditLogger({
-    log: bunyan.createLogger({
-      name: 'audit',
-      stream: process.stdout
-    })
-  }));
+  app.post('/feeds/add', addFeed);
+  //server.get('/feeds/:name/articles', getArticles);
 
-  server.post('/feeds/add', addFeed);
-  server.get('/feeds/:name/articles', getArticles);
-
-  server.listen(3000, function() {
-    log.info('%s listening at %s', server.name, server.url);
+  var server = app.listen(3000, function() {
+    log.info('Server listening at http://%s:%s', server.address().address, server.address().port);
   });
 
   function addFeed(req, res, next) {
-    Feed.add(req.params.link)
+    Feed.add(req.body.link)
       .then(function(result) {
         // Add to 'untagged' tag
         //log.debug(result);
@@ -50,7 +50,7 @@ function   (restify, bunyan, Feed, Tag) {
   };
 
   function getArticles(req, res, next) {
-    Feed.getArticles(req.params.name)
+    Feed.getArticles(req.body.name)
       .then(function(result) {
         res.send(result);
         next();

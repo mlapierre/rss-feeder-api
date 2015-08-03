@@ -3,11 +3,20 @@
   "version": "0.0.1",
   "main": "server.js",
   "scripts": {
-    "pretest": "jshint ."
+    "pretest": "jshint .",
+    "fetch": "node scheduledFetch.js | bunyan",
+    "crawl": "node scheduledCrawl.js | bunyan"
   },
   "dependencies": {
     "amdefine": "^0.1.1",
+    "body-parser": "^1.13.2",
+    "bunyan": "^1.4.0",
+    "cors": "^2.7.1",
+    "express": "^4.13.1",
     "feedparser": "1.1.x",
+    "mongodb": "^2.0.39",
+    "morgan": "^1.6.1",
+    "node-schedule": "^0.2.9",
     "pouchdb": "3.6.x",
     "pouchdb-upsert": "latest",
     "q": "^1.4.1",
@@ -17,7 +26,6 @@
   },
   "devDependencies": {
     "nock": "^2.7.0",
-    "bunyan": "^1.4.0",
     "jasmine": "^2.3.1",
     "jshint": "^2.5.6"
   },

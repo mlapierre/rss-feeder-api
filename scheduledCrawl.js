@@ -16,7 +16,10 @@ function   (request, FeederStore, FeederCrawler, schedule, bunyan) {
 
   log.level("debug");
 
-  updateAll();
+  log.info('Starting Web Crawl Scheduler');
+  var j = schedule.scheduleJob({minute: 21}, function(){
+    updateAll();
+  });
 
   function updateAll() {
     log.info('Starting Web Crawl');
@@ -27,15 +30,6 @@ function   (request, FeederStore, FeederCrawler, schedule, bunyan) {
             fetchAndSave(article);
           }
         });
-        // log.debug(articles.length);
-
-        // var max = 2;
-        // if (articles.length < 10) {
-        //   max = articles.length;
-        // }
-        // for (var i=0; i<max; i++) {
-        //   fetchAndSave(articles[i]);
-        // }
       }).catch(function(err) {
         log.error(err);
       }).done();
@@ -54,9 +48,9 @@ function   (request, FeederStore, FeederCrawler, schedule, bunyan) {
     log.debug('Fetching: ' + link);
     feederCrawler.get(link).then(function(response) {
       if (response.statusCode == 200) {
-        feederStore.saveArticleHTML(link, response.body).then(function(result) {
+        return feederStore.saveArticleHTML(link, response.body).then(function(result) {
           if (result.status === 'success') {
-            log.info('Saved: ' + link);
+            log.info('Saved ' + link);
             //log.debug(result.html);
           }
         });

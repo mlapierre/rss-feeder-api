@@ -3,7 +3,7 @@ if (typeof define !== 'function') { var define = require('amdefine')(module); }
 define(['bunyan'],
 function (bunyan) {
   var feederdb = {
-      host: 'localhost',
+      host: '10.181.15.218',
       port: '5984',
       db: {
         common: 'feeder',

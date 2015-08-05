@@ -8,8 +8,8 @@ requirejs.config({
     baseUrl: 'lib'
 });
 
-requirejs(['request', 'FeederStore', 'FeederCrawler', 'node-schedule', 'bunyan', 'Feed'],
-function   (request, FeederStore, FeederCrawler, schedule, bunyan, Feed) {
+requirejs(['request', 'FeederStore', 'FeederCrawler', 'node-schedule', 'bunyan', 'Feed', 'node-resque', 'memwatch-next'],
+function   (request, FeederStore, FeederCrawler, schedule, bunyan, Feed, NR, memwatch) {
   var feederStore = new FeederStore(),
       feederCrawler = new FeederCrawler(),
       log = bunyan.createLogger({ name: 'feeder_api'});
@@ -80,45 +80,86 @@ function   (request, FeederStore, FeederCrawler, schedule, bunyan, Feed) {
 "http://feeds.feedburner.com/blogspot/RLXA",
 "http://lesswrong.com/.rss"];
 
-  // updateAll(feeds);
-  fetchAndSave(feeds);
+var connectionDetails = {
+  package:   "redis",
+  host:      "127.0.0.1",
+  password:  "",
+  port:      6379,
+  database:  0,
+  // namespace: "resque",
+  // looping: true
+}
 
-  function fetchAndSave(feeds) {
-    if (feeds.length <= 0) {
-        return;
-    }
-    var feed = feeds.shift();
-    log.info('Fetching: ' + feed);
+var jobsToComplete = 0;
+var jobs = {
+  "fetch": {
+    perform: function(feed, callback){
+      //log.info('Fetching: ' + feed);
+      console.log('Fetching: ' + feed);
 
-    Feed.add(feed).then(function() {
-      fetchAndSave(feeds);
-    }).catch(function(err) {
-        log.error(err);
-    }).done();
-  };
+      Feed.add(feed).then(function(result) {
+        jobsToComplete--;
+        shutdown();
+        callback(null, 'updated: ' + result.updated);
+      }).catch(function(err) {
+        //log.error(err);
+        console.log(err);
+        throw err;
+        callback(null);
+      }).done();
+    },
+  }
+};
 
-  // function updateAll(feeds) {
-  //   log.info('Starting Feed Update');
-  //   // feederStore.getAllFeeds()
-  //   //   .then(function(feeds) {
-  //       feeds.forEach(function(feed) {
-  //         fetchAndSave(feed);
-  //       });
-  //     // }).catch(function(err) {
-  //     //   log.error(err);
-  //     // }).done();
-  //   };
+var worker = new NR.worker({connection: connectionDetails, queues: "*"}, jobs, function(){
+  worker.workerCleanup(); // optional: cleanup any previous improperly shutdown workers on this host
+  worker.start();
+});
 
-  // function fetchAndSave(feed_link) {
-  //   log.info('Fetching: ' + feed_link);
-  //   feederCrawler
-  //     .getFeed(feed_link)
-  //     .then(function(feed) {
-  //       feederStore.save(feed);
-  //     }).catch(function(err) {
-  //       log.error(err);
-  //     }).done();
-  // };
+var scheduler = new NR.scheduler({connection: connectionDetails}, function(){
+  scheduler.start();
+});
 
+worker.on('start',           function(){ console.log("worker started"); })
+worker.on('end',             function(){ console.log("worker ended"); })
+worker.on('cleaning_worker', function(worker, pid){ console.log("cleaning old worker " + worker); })
+worker.on('poll',            function(queue){ console.log("worker polling " + queue); })
+worker.on('job',             function(queue, job){ console.log("working job " + queue + " " + JSON.stringify(job)); })
+worker.on('reEnqueue',       function(queue, job, plugin){ console.log("reEnqueue job (" + plugin + ") " + queue + " " + JSON.stringify(job)); })
+worker.on('success',         function(queue, job, result){ console.log("job success " + queue + " " + JSON.stringify(job) + " >> " + result); })
+worker.on('failure',         function(queue, job, failure){ console.log("job failure " + queue + " " + JSON.stringify(job) + " >> " + failure); })
+worker.on('error',           function(queue, job, error){ console.log("error " + queue + " " + JSON.stringify(job) + " >> " + error); })
+worker.on('pause',           function(){ console.log("worker paused"); })
+
+scheduler.on('start',             function(){ console.log("scheduler started"); })
+scheduler.on('end',               function(){ console.log("scheduler ended"); })
+scheduler.on('poll',              function(){ console.log("scheduler polling"); })
+scheduler.on('error',             function(error){ console.log("scheduler error >> " + error); })
+scheduler.on('working_timestamp', function(timestamp){ console.log("scheduler working timestamp " + timestamp); })
+scheduler.on('transferred_job',   function(timestamp, job){ console.log("scheduler enquing job " + timestamp + " >> " + JSON.stringify(job)); })
+
+memwatch.on('stats', function(stats) { console.log(stats); });
+
+var queue = new NR.queue({connection: connectionDetails}, jobs, function(){
+  var max = feeds.length;
+  //var max = 5;
+  for (var i = 0; i < max; i++ ) {
+    queue.enqueue('feed_fetch', "fetch", feeds[i]);
+  }
+
+  jobsToComplete = max;
+});
+
+var shutdown = function(){
+  if(jobsToComplete === 0){
+    setTimeout(function(){
+      scheduler.end(function(){
+        worker.end(function(){
+          process.exit();
+        });
+      });
+    }, 500);
+  }
+}
 
 });

@@ -3,7 +3,7 @@ if (typeof define !== 'function') { var define = require('amdefine')(module); }
 define(['bunyan'],
 function (bunyan) {
   var feederdb = {
-      host: 'localhost',
+      host: 'boot2docker',
       port: '5984',
       db: {
         common: 'feeder',
@@ -18,7 +18,7 @@ function (bunyan) {
       user: 'http://' + feederdb.host + ':' + feederdb.port + '/' + feederdb.db.user,
       html: 'http://' + feederdb.host + ':' + feederdb.port + '/' + feederdb.db.html,
     },
-    pagedb: "mongodb://localhost:27017/feeder_html",
+    pagedb: "mongodb://boot2docker:27017/feeder_html",
     logger: function() {
       return bunyan.createLogger({ name: 'feeder_api' });
     }

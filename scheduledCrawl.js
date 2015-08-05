@@ -17,7 +17,7 @@ function   (request, FeederStore, FeederCrawler, schedule, bunyan) {
   log.level("debug");
 
   log.info('Starting Web Crawl Scheduler');
-  var j = schedule.scheduleJob({minute: 21}, function(){
+  var j = schedule.scheduleJob('21 4,9 * * *', function(){
     updateAll();
   });
 

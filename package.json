@@ -16,6 +16,7 @@
     "feedparser": "1.1.x",
     "mongodb": "^2.0.39",
     "morgan": "^1.6.1",
+    "node-resque": "^0.16.4",
     "node-schedule": "^0.2.9",
     "pouchdb": "3.6.x",
     "pouchdb-upsert": "latest",
@@ -25,6 +26,7 @@
     "restify": "^3.0.3"
   },
   "devDependencies": {
+    "memwatch-next": "^0.2.7",
     "nock": "^2.7.0",
     "jasmine": "^2.3.1",
     "jshint": "^2.5.6"
